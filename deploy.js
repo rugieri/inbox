@@ -1,55 +1,24 @@
-const dotenv = require('dotenv');
-const path = require('path');
+require('dotenv').config();
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const Web3 = require('web3');
-const { abi, evm } = require('./compile');
+const abi = require('./compile').abi; // the contract interface aka ABI
+const bytecode = require('./compile').evm.bytecode.object;
 
-dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-const mnemonicPhrase = process.env.MNEMONIC_PHRASE;
-const providerUrl = process.env.PROVIDER_URL;
-
-const provider = new HDWalletProvider({
-  mnemonic: mnemonicPhrase,
-  providerOrUrl: providerUrl,
-});
-
+const provider = new HDWalletProvider(
+  process.env.PRIVATE_KEY,
+  process.env.RPC_URL
+);
 const web3 = new Web3(provider);
 
-const cColors = {
-  green: '\x1b[36m%s\x1b[32m',
-  yellow: '\x1b[36m%s\x1b[33m',
-  red: '\x1b[36m%s\x1b[31m',
+const deploy = async () => {
+  const accounts = await web3.eth.getAccounts();
+  console.log('Attempting to deploy from account', accounts[0]);
+
+  const result = await new web3.eth.Contract(abi)
+    .deploy({ data: bytecode, arguments: ['Hi there!'] })
+    .send({ from: accounts[0] });
+
+  console.log('Contract deployed to: ', result.options.address);
 };
 
-(async () => {
-  try {
-    let initMsg = 'Hi There!';
-
-    const accounts = await web3.eth.getAccounts();
-
-    console.log(
-      cColors.yellow,
-      'Attempting to deploy contract from account: ',
-      accounts[0]
-    );
-
-    const contract = await new web3.eth.Contract(abi);
-    const deploy = contract.deploy({
-      data: '0x' + evm.bytecode.object,
-      arguments: [initMsg],
-    });
-    const results = await deploy.send({ from: accounts[0] });
-
-    console.log(
-      cColors.green,
-      'Contract deployed at account: ',
-      results.options.address
-    );
-
-    process.exit();
-  } catch (e) {
-    console.log(cColors.red, 'Contract deploy error: ', e);
-    process.exit();
-  }
-})();
+deploy();
