@@ -7,7 +7,7 @@ From course Ethereum and Solidity: The Complete Developer's Guide by Stephen Gri
 
 In the project directory, you can run: <br />
 
-> npm-install
+> npm install
 
 BEFORE running the tests or using the command "node compile": Open the ".env" file and replace the values:
 
